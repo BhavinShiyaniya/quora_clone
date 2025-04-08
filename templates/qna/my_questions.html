@@ -38,7 +38,7 @@
                     <div class="mb-3">
                         <p><strong>{{ answer.user.first_name }} {{ answer.user.last_name }}</strong>: {{ answer.answer }}</p>
                         <button class="btn btn-sm {% if answer.id in liked_answers %}btn-primary{% else %}btn-outline-primary{% endif %} like-btn"
-                                data-answer-id="{{ answer.id }}">
+                                data-answer-id="{{ answer.id }}" {% if question.user == request.user %}disabled{% endif %}>
                             <i class="fa fa-heart me-1"></i> Like (<span id="like-count-{{ answer.id }}">{{ answer.like_set.count }}</span>)
                         </button>
                         <hr>
