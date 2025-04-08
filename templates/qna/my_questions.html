@@ -1,0 +1,171 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Questions</h2>
+        <button class="btn btn-success" data-bs-toggle="offcanvas" data-bs-target="#questionDrawer">
+            <i class="fa fa-plus me-1"></i> Ask a Question
+        </button>
+    </div>
+    {% for question in questions %}
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <div><strong>{{ question.user.first_name }} {{ question.user.last_name }}</strong> asked:</div>
+                {% if request.user == question.user %}
+                <div>
+                    <button class="btn btn-sm btn-warning edit-question-btn"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#editQuestionDrawer"
+                        data-id="{{ question.id }}"
+                        data-question="{{ question.question }}">
+                        <i class="fa fa-pencil me-1"></i> Update
+                    </button>
+                    <button class="btn btn-sm btn-danger delete-question-btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteModal"
+                        data-id="{{ question.id }}">
+                        <i class="fa fa-trash me-1"></i> Delete
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <h5>{{ question.question }}</h5>
+                <hr>
+                {% for answer in question.answer_set.all %}
+                    <div class="mb-3">
+                        <p><strong>{{ answer.user.first_name }} {{ answer.user.last_name }}</strong>: {{ answer.answer }}</p>
+                        <button class="btn btn-sm {% if answer.id in liked_answers %}btn-primary{% else %}btn-outline-primary{% endif %} like-btn"
+                                data-answer-id="{{ answer.id }}">
+                            <i class="fa fa-heart me-1"></i> Like (<span id="like-count-{{ answer.id }}">{{ answer.like_set.count }}</span>)
+                        </button>
+                        <hr>
+                    </div>
+                {% empty %}
+                    <p class="text-muted">No answers yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-muted">No questions yet.</p>
+    {% endfor %}
+
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirm Delete</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              Are you sure you want to delete this question?
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" id="confirm-delete-btn" class="btn btn-danger">Delete</button>
+            </div>
+          </div>
+        </div>
+    </div>
+      
+    {% include "qna/create_question.html" %}
+    {% include "qna/update_question.html" %}
+    
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(".like-btn").click(function () {
+        const btn = $(this);
+        const answerId = btn.data("answer-id");
+
+        $.ajax({
+            url: "{% url 'qna:toggle_like' %}",
+            type: "POST",
+            data: {
+                answer_id: answerId,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function (response) {
+                if (response.liked !== undefined) {
+                    $(`#like-count-${answerId}`).text(response.like_count);
+
+                    // Toggle button style
+                    if (response.liked === true) {
+                        btn.removeClass("btn-outline-primary").addClass("btn-primary");
+                    } else {
+                        btn.removeClass("btn-primary").addClass("btn-outline-primary");
+                    }
+                }
+            }
+        });
+    });
+</script>
+
+<script>
+    $(".edit-question-btn").click(function () {
+        const id = $(this).data("id");
+        const questionText = $(this).data("question");
+
+        $("#edit-question-id").val(id);
+        $("#edit-question-text").val(questionText);
+    });
+
+    $("#edit-question-form").submit(function (e) {
+        e.preventDefault();
+
+        const id = $("#edit-question-id").val();
+        const question = $("#edit-question-text").val();
+        const csrf = '{{ csrf_token }}';
+
+        $.ajax({
+            url: "{% url 'qna:update_question' %}",
+            type: "POST",
+            data: {
+                question_id: id,
+                question: question,
+                csrfmiddlewaretoken: csrf
+            },
+            success: function (response) {
+                location.reload(); // Refresh to reflect the change
+            },
+            error: function () {
+                alert("Error updating question");
+            }
+        });
+    });
+</script>
+
+<script>
+    let deleteQuestionId = null;
+
+    $(".delete-question-btn").click(function () {
+        deleteQuestionId = $(this).data("id");
+    });
+
+    $("#confirm-delete-btn").click(function () {
+        if (deleteQuestionId) {
+            $.ajax({
+                url: "{% url 'qna:delete_question' %}",
+                type: "POST",
+                data: {
+                    question_id: deleteQuestionId,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function (response) {
+                    if (response.status === 'success') {
+                        location.reload(); // or remove DOM element dynamically
+                    } else {
+                        alert(response.message || "Failed to delete question.");
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+
+{% endblock %}

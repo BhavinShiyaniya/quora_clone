@@ -1,0 +1,18 @@
+<div class="offcanvas offcanvas-end" tabindex="-1" id="editQuestionDrawer">
+    <div class="offcanvas-header">
+      <h5>Edit Question</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+      <form id="edit-question-form" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="question_id" id="edit-question-id">
+        <div class="mb-3">
+          <label for="edit-question-text" class="form-label">Question</label>
+          <textarea name="question" id="edit-question-text" class="form-control" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Update</button>
+      </form>
+    </div>
+</div>
+  

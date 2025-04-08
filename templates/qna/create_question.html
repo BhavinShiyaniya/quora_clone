@@ -1,0 +1,16 @@
+<div class="offcanvas offcanvas-end" tabindex="-1" id="questionDrawer" aria-labelledby="questionDrawerLabel">
+    <div class="offcanvas-header">
+        <h5 id="questionDrawerLabel">Ask a New Question</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form method="post" action="{% url 'qna:create_question' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="questionText" class="form-label">Your Question</label>
+                <textarea class="form-control" id="questionText" name="question" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Submit Question</button>
+        </form>
+    </div>
+</div>
